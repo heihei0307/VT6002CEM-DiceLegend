@@ -28,8 +28,8 @@ class HomeFragment : Fragment() {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        val textView: TextView = binding.diceNumber
-        textView.text = "Shake to random dice"
+        val alertText: TextView = binding.alertMessage
+        alertText.text = "Shake to random dice"
 //        homeViewModel.text.observe(viewLifecycleOwner) {
 //            textView.text = it
 //        }

@@ -6,7 +6,6 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Bundle
-import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -73,7 +72,14 @@ class MainActivity : AppCompatActivity() {
 
             if (acceleration > 10) {
                 if(!resume){
-                    randomDice()
+                    var playerNumber = findViewById<TextView>(R.id.player_dice_number)
+                    var aiNumber = findViewById<TextView>(R.id.ai_dice_number)
+                    var alert = findViewById<TextView>(R.id.alert_message)
+                    alert.visibility = TextView.INVISIBLE
+                    playerNumber.text = randomDice()
+                    aiNumber.text = randomDice()
+                    playerNumber.visibility = TextView.VISIBLE
+                    aiNumber.visibility = TextView.VISIBLE
                     resume = true
                     Toast.makeText(applicationContext, "Shake Dice Result", Toast.LENGTH_SHORT).show()
                 }else{
@@ -89,19 +95,22 @@ class MainActivity : AppCompatActivity() {
             val lightValue = event.values[0]
             if(lightValue < 200){
                 Toast.makeText(applicationContext, "Game Reset!", Toast.LENGTH_SHORT).show()
-                var viewNumber = findViewById<TextView>(R.id.dice_number)
-                viewNumber.text = "Shake to random dice"
+                var playerNumber = findViewById<TextView>(R.id.player_dice_number)
+                var aiNumber = findViewById<TextView>(R.id.ai_dice_number)
+                var alertMessage = findViewById<TextView>(R.id.alert_message)
+                playerNumber.visibility = TextView.INVISIBLE
+                aiNumber.visibility = TextView.INVISIBLE
+                alertMessage.visibility = TextView.VISIBLE
                 resume = false
             }
         }
         override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
     }
 
-    fun randomDice() {
+    fun randomDice(): String? {
         val randomGenerator = Random()
         val randomNum = randomGenerator.nextInt(6) + 1
-        var viewNumber = findViewById<TextView>(R.id.dice_number)
-        viewNumber.text = "" + randomNum;
+        return ""+randomNum
     }
 
     override fun onResume() {
