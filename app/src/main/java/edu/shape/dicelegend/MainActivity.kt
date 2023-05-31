@@ -20,13 +20,19 @@ import java.util.Random
 import kotlin.math.sqrt
 
 class MainActivity : AppCompatActivity() {
-
+    enum class GameStatus {
+        NewGame,
+        ShakeDice,
+        OpenUp,
+    }
     private lateinit var binding: ActivityMainBinding
     private var sensorManager: SensorManager? = null
     private var acceleration = 0f
     private var currentAcceleration = 0f
     private var lastAcceleration = 0f
-    private var resume = false
+    private var status: GameStatus = GameStatus.NewGame
+    private var currentAiDice = 0
+    private var currentPlayerDice = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,25 +71,50 @@ class MainActivity : AppCompatActivity() {
             val y = event.values[1]
             val z = event.values[2]
             lastAcceleration = currentAcceleration
-
             currentAcceleration = sqrt((x * x + y * y + z * z).toDouble()).toFloat()
             val delta: Float = currentAcceleration - lastAcceleration
             acceleration = acceleration * 0.9f + delta
 
             if (acceleration > 10) {
-                if(!resume){
-                    var playerNumber = findViewById<TextView>(R.id.player_dice_number)
-                    var aiNumber = findViewById<TextView>(R.id.ai_dice_number)
-                    var alert = findViewById<TextView>(R.id.alert_message)
+                var alert = findViewById<TextView>(R.id.alert_message)
+                var playerView = findViewById<TextView>(R.id.player_dice_number)
+                var aiView = findViewById<TextView>(R.id.ai_dice_number)
+                if(status == GameStatus.NewGame){
                     alert.visibility = TextView.INVISIBLE
-                    playerNumber.text = randomDice()
-                    aiNumber.text = randomDice()
-                    playerNumber.visibility = TextView.VISIBLE
-                    aiNumber.visibility = TextView.VISIBLE
-                    resume = true
+                    currentAiDice = randomDice()
+                    currentPlayerDice = randomDice()
+
+                    playerView.visibility = TextView.VISIBLE
+                    aiView.visibility = TextView.VISIBLE
+                    status = GameStatus.ShakeDice
                     Toast.makeText(applicationContext, "Shake Dice Result", Toast.LENGTH_SHORT).show()
-                }else{
-                    Toast.makeText(applicationContext, "Already shake, please turn off the light to reset the game!", Toast.LENGTH_SHORT).show()
+                }
+                else if(status == GameStatus.ShakeDice){
+                    playerView.text = ""+currentPlayerDice
+                    aiView.text = ""+currentAiDice
+                    var winner = ""
+                    if(currentPlayerDice == currentAiDice)
+                        winner = "draw"
+                    else if(currentPlayerDice > currentAiDice)
+                        winner = "player win"
+                    else if(currentPlayerDice < currentAiDice)
+                        winner = "ai win"
+
+                    status = GameStatus.OpenUp
+                    Toast.makeText(applicationContext, "This round is $winner", Toast.LENGTH_SHORT).show()
+                }
+                else if(status == GameStatus.OpenUp){
+                    currentAiDice = 0
+                    currentPlayerDice = 0
+
+                    playerView.visibility = TextView.INVISIBLE
+                    aiView.visibility = TextView.INVISIBLE
+                    playerView.text = "Hidden"
+                    aiView.text = "Hidden"
+                    alert.visibility = TextView.VISIBLE
+                    status = GameStatus.NewGame
+
+                    Toast.makeText(applicationContext, "Game Reset!", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -93,24 +124,22 @@ class MainActivity : AppCompatActivity() {
     private val lightSensorListener: SensorEventListener = object : SensorEventListener {
         override fun onSensorChanged(event: SensorEvent) {
             val lightValue = event.values[0]
-            if(lightValue < 200){
-                Toast.makeText(applicationContext, "Game Reset!", Toast.LENGTH_SHORT).show()
-                var playerNumber = findViewById<TextView>(R.id.player_dice_number)
-                var aiNumber = findViewById<TextView>(R.id.ai_dice_number)
-                var alertMessage = findViewById<TextView>(R.id.alert_message)
-                playerNumber.visibility = TextView.INVISIBLE
-                aiNumber.visibility = TextView.INVISIBLE
-                alertMessage.visibility = TextView.VISIBLE
-                resume = false
+            var playerView = findViewById<TextView>(R.id.player_dice_number)
+            if(status == GameStatus.ShakeDice){
+                if(lightValue < 200){
+                    playerView.text = ""+currentPlayerDice
+                }else{
+                    playerView.text = "Hidden"
+                }
             }
+
         }
         override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
     }
 
-    fun randomDice(): String? {
+    fun randomDice(): Int {
         val randomGenerator = Random()
-        val randomNum = randomGenerator.nextInt(6) + 1
-        return ""+randomNum
+        return randomGenerator.nextInt(6) + 1
     }
 
     override fun onResume() {
