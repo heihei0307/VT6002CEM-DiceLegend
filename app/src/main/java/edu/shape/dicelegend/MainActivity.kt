@@ -33,6 +33,7 @@ class MainActivity : AppCompatActivity() {
     private var status: GameStatus = GameStatus.NewGame
     private var currentAiDice = 0
     private var currentPlayerDice = 0
+    private var playerKey: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,6 +50,17 @@ class MainActivity : AppCompatActivity() {
                 R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_notifications))
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
+
+        val sharedPrefs = getPreferences(MODE_PRIVATE)
+        val editor = sharedPrefs.edit()
+        playerKey = sharedPrefs.getString("player_key", null)
+        if(playerKey.isNullOrBlank()){
+            val key = bindPlayer()
+            editor.putString("player_key", key)
+            editor.apply()
+            playerKey = sharedPrefs.getString("player_key", null)
+        }
+        Toast.makeText(applicationContext, "Your key is $playerKey!", Toast.LENGTH_SHORT).show()
 
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
@@ -140,6 +152,21 @@ class MainActivity : AppCompatActivity() {
     fun randomDice(): Int {
         val randomGenerator = Random()
         return randomGenerator.nextInt(6) + 1
+    }
+
+    fun bindPlayer(): String{
+        val random = Random()
+        val sb = StringBuilder(6)
+        for (i in 0 until 6) {
+            val randomInt = random.nextInt(62)
+            val char = when {
+                randomInt < 10 -> (randomInt + 48).toChar() // 0-9
+                randomInt < 36 -> (randomInt + 55).toChar() // A-Z
+                else -> (randomInt + 61).toChar() // a-z
+            }
+            sb.append(char)
+        }
+        return sb.toString()
     }
 
     override fun onResume() {
