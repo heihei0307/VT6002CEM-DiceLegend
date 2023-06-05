@@ -6,6 +6,8 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Bundle
+import android.util.Log
+import android.widget.ListView
 import android.widget.TextView
 import android.widget.Toast
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -14,7 +16,14 @@ import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import edu.shape.dicelegend.databinding.ActivityMainBinding
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Objects
 import java.util.Random
 import kotlin.math.sqrt
@@ -33,7 +42,9 @@ class MainActivity : AppCompatActivity() {
     private var status: GameStatus = GameStatus.NewGame
     private var currentAiDice = 0
     private var currentPlayerDice = 0
+    private var currentWinner = ""
     private var playerKey: String? = null
+    lateinit var _db: DatabaseReference
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,6 +86,10 @@ class MainActivity : AppCompatActivity() {
         Objects.requireNonNull(sensorManager)!!
             .registerListener(lightSensorListener, sensorManager!!
                 .getDefaultSensor(Sensor.TYPE_LIGHT), SensorManager.SENSOR_DELAY_NORMAL)
+
+        _db = FirebaseDatabase.getInstance().reference
+
+
     }
 
     private val sensorListener: SensorEventListener = object : SensorEventListener {
@@ -113,11 +128,14 @@ class MainActivity : AppCompatActivity() {
                         winner = "ai win"
 
                     status = GameStatus.OpenUp
+                    currentWinner = winner
+                    addDiceHistory()
                     Toast.makeText(applicationContext, "This round is $winner", Toast.LENGTH_SHORT).show()
                 }
                 else if(status == GameStatus.OpenUp){
                     currentAiDice = 0
                     currentPlayerDice = 0
+                    currentWinner = ""
 
                     playerView.visibility = TextView.INVISIBLE
                     aiView.visibility = TextView.INVISIBLE
@@ -179,5 +197,19 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         sensorManager!!.unregisterListener(sensorListener)
         super.onPause()
+    }
+
+    fun addDiceHistory(){
+        val history = DiceHistory.create()
+        history.playerId = playerKey
+        history.diceDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+        history.playerDice = currentPlayerDice
+        history.aiDice = currentAiDice
+        history.winner = currentWinner
+        val newHistory = _db.child(Statics.FIREBASE_DICE_HISTORY).push()
+        history.objectId = newHistory.key
+        newHistory.setValue(history)
+
+        Toast.makeText(this, "History added to list successfully" + history.objectId, Toast.LENGTH_SHORT).show()
     }
 }

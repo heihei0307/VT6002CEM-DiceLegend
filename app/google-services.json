@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "599292354065",
+    "firebase_url": "https://dice-legend-bcf07-default-rtdb.firebaseio.com",
+    "project_id": "dice-legend-bcf07",
+    "storage_bucket": "dice-legend-bcf07.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:599292354065:android:3606eadbef8d83f8c61bb0",
+        "android_client_info": {
+          "package_name": "edu.shape.dicelegend"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "599292354065-d237aj33cbfbc1chm48kqrq5vg9fov3d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBHR0id7KKIzEMgxFgC86PZAObNmUmbJ-s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "599292354065-d237aj33cbfbc1chm48kqrq5vg9fov3d.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
