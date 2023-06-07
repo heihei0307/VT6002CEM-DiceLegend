@@ -6,6 +6,7 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,21 +14,30 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import com.google.gson.Gson
 import edu.shape.dicelegend.DiceHistory
 import edu.shape.dicelegend.MainActivity
 import edu.shape.dicelegend.R
 import edu.shape.dicelegend.Statics
 import edu.shape.dicelegend.databinding.FragmentHomeBinding
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import java.io.IOException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Objects
 import java.util.Random
+import java.util.concurrent.CountDownLatch
 import kotlin.math.sqrt
 
 class HomeFragment : Fragment() {
+
+    data class DiceResult(val dice: Int = 0)
 
     private var _binding: FragmentHomeBinding? = null
     private var context: Context? = null
@@ -45,15 +55,13 @@ class HomeFragment : Fragment() {
     private var currentWinner = ""
     lateinit var _db: DatabaseReference
     private var playerKey: String? = null
+    private var client: OkHttpClient? = null
 
     override fun onCreateView(
-            inflater: LayoutInflater,
-            container: ViewGroup?,
-            savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View {
-        val homeViewModel =
-                ViewModelProvider(this).get(HomeViewModel::class.java)
-
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
@@ -65,21 +73,27 @@ class HomeFragment : Fragment() {
         sensorManager = activity?.getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
         Objects.requireNonNull(sensorManager)!!
-            .registerListener(sensorListener, sensorManager!!
-                .getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL)
+            .registerListener(
+                sensorListener, sensorManager!!
+                    .getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL
+            )
 
         acceleration = 10f
         currentAcceleration = SensorManager.GRAVITY_EARTH
         lastAcceleration = SensorManager.GRAVITY_EARTH
 
         Objects.requireNonNull(sensorManager)!!
-            .registerListener(lightSensorListener, sensorManager!!
-                .getDefaultSensor(Sensor.TYPE_LIGHT), SensorManager.SENSOR_DELAY_NORMAL)
+            .registerListener(
+                lightSensorListener, sensorManager!!
+                    .getDefaultSensor(Sensor.TYPE_LIGHT), SensorManager.SENSOR_DELAY_NORMAL
+            )
 
         val sharedPrefs = activity?.getPreferences(AppCompatActivity.MODE_PRIVATE)
         playerKey = sharedPrefs?.getString("player_key", null)
 
         _db = FirebaseDatabase.getInstance().reference
+
+        client = OkHttpClient()
 
         return root
     }
@@ -90,8 +104,10 @@ class HomeFragment : Fragment() {
     }
 
     override fun onResume() {
-        sensorManager?.registerListener(sensorListener, sensorManager!!.getDefaultSensor(
-            Sensor .TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL
+        sensorManager?.registerListener(
+            sensorListener, sensorManager!!.getDefaultSensor(
+                Sensor.TYPE_ACCELEROMETER
+            ), SensorManager.SENSOR_DELAY_NORMAL
         )
         super.onResume()
     }
@@ -115,33 +131,31 @@ class HomeFragment : Fragment() {
                 var alert = binding.root.findViewById<TextView>(R.id.alert_message)
                 var playerView = binding.root.findViewById<TextView>(R.id.player_dice_number)
                 var aiView = binding.root.findViewById<TextView>(R.id.ai_dice_number)
-                if(status == MainActivity.GameStatus.NewGame){
+                if (status == MainActivity.GameStatus.NewGame) {
                     alert.visibility = TextView.INVISIBLE
-                    currentAiDice = randomDice()
-                    currentPlayerDice = randomDice()
+                    currentAiDice = getDice()
+                    currentPlayerDice = getDice()
 
                     playerView.visibility = TextView.VISIBLE
                     aiView.visibility = TextView.VISIBLE
                     status = MainActivity.GameStatus.ShakeDice
                     Toast.makeText(context, "Shake Dice Result", Toast.LENGTH_SHORT).show()
-                }
-                else if(status == MainActivity.GameStatus.ShakeDice){
-                    playerView.text = ""+currentPlayerDice
-                    aiView.text = ""+currentAiDice
+                } else if (status == MainActivity.GameStatus.ShakeDice) {
+                    playerView.text = "" + currentPlayerDice
+                    aiView.text = "" + currentAiDice
                     var winner = ""
-                    if(currentPlayerDice == currentAiDice)
+                    if (currentPlayerDice == currentAiDice)
                         winner = "draw"
-                    else if(currentPlayerDice > currentAiDice)
+                    else if (currentPlayerDice > currentAiDice)
                         winner = "player win"
-                    else if(currentPlayerDice < currentAiDice)
+                    else if (currentPlayerDice < currentAiDice)
                         winner = "ai win"
 
                     status = MainActivity.GameStatus.OpenUp
                     currentWinner = winner
                     addDiceHistory()
                     Toast.makeText(context, "This round is $winner", Toast.LENGTH_SHORT).show()
-                }
-                else if(status == MainActivity.GameStatus.OpenUp){
+                } else if (status == MainActivity.GameStatus.OpenUp) {
                     currentAiDice = 0
                     currentPlayerDice = 0
                     currentWinner = ""
@@ -157,6 +171,7 @@ class HomeFragment : Fragment() {
                 }
             }
         }
+
         override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
     }
 
@@ -164,15 +179,16 @@ class HomeFragment : Fragment() {
         override fun onSensorChanged(event: SensorEvent) {
             val lightValue = event.values[0]
             var playerView = binding.root.findViewById<TextView>(R.id.player_dice_number)
-            if(status == MainActivity.GameStatus.ShakeDice){
-                if(lightValue < 200){
-                    playerView.text = ""+currentPlayerDice
-                }else{
+            if (status == MainActivity.GameStatus.ShakeDice) {
+                if (lightValue < 200) {
+                    playerView.text = "" + currentPlayerDice
+                } else {
                     playerView.text = "Hidden"
                 }
             }
 
         }
+
         override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
     }
 
@@ -181,10 +197,37 @@ class HomeFragment : Fragment() {
         return randomGenerator.nextInt(6) + 1
     }
 
-    fun addDiceHistory(){
+    fun getDice(): Int {
+        val request = Request.Builder().url("https://dice-api.genzouw.com/v1/dice").build()
+        val latch = CountDownLatch(1)
+        var dice = 0
+
+        client?.newCall(request)?.enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.d("HKT", e.toString())
+                latch.countDown()
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                var resStr = response.body?.string()
+                val result = Gson().fromJson(resStr, DiceResult::class.java)
+
+                dice = result.dice
+                Log.d("HKT", "response: $dice")
+                latch.countDown()
+            }
+        })
+
+        latch.await()
+
+        return dice
+    }
+
+    fun addDiceHistory() {
         val history = DiceHistory.create()
         history.playerId = playerKey
-        history.diceDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+        history.diceDate =
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
         history.playerDice = currentPlayerDice
         history.aiDice = currentAiDice
         history.winner = currentWinner
@@ -192,6 +235,10 @@ class HomeFragment : Fragment() {
         history.objectId = newHistory.key
         newHistory.setValue(history)
 
-        Toast.makeText(context, "History added to list successfully" + history.objectId, Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            context,
+            "History added to list successfully" + history.objectId,
+            Toast.LENGTH_SHORT
+        ).show()
     }
 }
