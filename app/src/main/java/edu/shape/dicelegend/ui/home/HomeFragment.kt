@@ -5,6 +5,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.hardware.camera2.CaptureResult.SENSOR_SENSITIVITY
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -88,6 +89,12 @@ class HomeFragment : Fragment() {
                     .getDefaultSensor(Sensor.TYPE_LIGHT), SensorManager.SENSOR_DELAY_NORMAL
             )
 
+        Objects.requireNonNull(sensorManager)!!
+            .registerListener(
+                proximitySensorListener, sensorManager!!
+                    .getDefaultSensor(Sensor.TYPE_PROXIMITY), SensorManager.SENSOR_DELAY_NORMAL
+            )
+
         val sharedPrefs = activity?.getPreferences(AppCompatActivity.MODE_PRIVATE)
         playerKey = sharedPrefs?.getString("player_key", null)
 
@@ -140,21 +147,6 @@ class HomeFragment : Fragment() {
                     aiView.visibility = TextView.VISIBLE
                     status = MainActivity.GameStatus.ShakeDice
                     Toast.makeText(context, "Shake Dice Result", Toast.LENGTH_SHORT).show()
-                } else if (status == MainActivity.GameStatus.ShakeDice) {
-                    playerView.text = "" + currentPlayerDice
-                    aiView.text = "" + currentAiDice
-                    var winner = ""
-                    if (currentPlayerDice == currentAiDice)
-                        winner = "draw"
-                    else if (currentPlayerDice > currentAiDice)
-                        winner = "player win"
-                    else if (currentPlayerDice < currentAiDice)
-                        winner = "ai win"
-
-                    status = MainActivity.GameStatus.OpenUp
-                    currentWinner = winner
-                    addDiceHistory()
-                    Toast.makeText(context, "This round is $winner", Toast.LENGTH_SHORT).show()
                 } else if (status == MainActivity.GameStatus.OpenUp) {
                     currentAiDice = 0
                     currentPlayerDice = 0
@@ -186,9 +178,36 @@ class HomeFragment : Fragment() {
                     playerView.text = "Hidden"
                 }
             }
-
         }
 
+        override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
+    }
+
+    private val proximitySensorListener: SensorEventListener = object : SensorEventListener{
+        override fun onSensorChanged(event: SensorEvent?) {
+            val distance = event?.values?.first()
+            Log.d("Tag", "prox dis:${distance} cm")
+            if(distance!! < 1){
+                var playerView = binding.root.findViewById<TextView>(R.id.player_dice_number)
+                var aiView = binding.root.findViewById<TextView>(R.id.ai_dice_number)
+                if (status == MainActivity.GameStatus.ShakeDice) {
+                    playerView.text = "" + currentPlayerDice
+                    aiView.text = "" + currentAiDice
+                    var winner = ""
+                    if (currentPlayerDice == currentAiDice)
+                        winner = "draw"
+                    else if (currentPlayerDice > currentAiDice)
+                        winner = "player win"
+                    else if (currentPlayerDice < currentAiDice)
+                        winner = "ai win"
+
+                    status = MainActivity.GameStatus.OpenUp
+                    currentWinner = winner
+                    addDiceHistory()
+                    Toast.makeText(context, "This round is $winner", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
         override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
     }
 

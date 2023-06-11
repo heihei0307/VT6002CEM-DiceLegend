@@ -1,4 +1,4 @@
-package edu.shape.dicelegend.ui.dashboard
+package edu.shape.dicelegend.ui.diceHistory
 
 import android.os.Bundle
 import android.util.Log
