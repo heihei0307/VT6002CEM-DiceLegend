@@ -1,14 +1,6 @@
 package edu.shape.dicelegend
 
-import android.content.Context
-import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
-import android.hardware.SensorManager
 import android.os.Bundle
-import android.util.Log
-import android.widget.ListView
-import android.widget.TextView
 import android.widget.Toast
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.appcompat.app.AppCompatActivity
@@ -16,17 +8,8 @@ import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 import edu.shape.dicelegend.databinding.ActivityMainBinding
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.util.Objects
 import java.util.Random
-import kotlin.math.sqrt
 
 class MainActivity : AppCompatActivity() {
     enum class GameStatus {
@@ -51,7 +34,7 @@ class MainActivity : AppCompatActivity() {
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         val appBarConfiguration = AppBarConfiguration(setOf(
-                R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_notifications))
+                R.id.navigation_home, R.id.navigation_dice_history,))
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
 
@@ -66,10 +49,6 @@ class MainActivity : AppCompatActivity() {
         }
         Toast.makeText(applicationContext, "Your key is $playerKey!", Toast.LENGTH_SHORT).show()
     }
-
-
-
-
 
     fun bindPlayer(): String{
         val random = Random()

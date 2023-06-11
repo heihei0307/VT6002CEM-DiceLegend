@@ -12,14 +12,9 @@
         tools:layout="@layout/fragment_home" />
 
     <fragment
-        android:id="@+id/navigation_dashboard"
+        android:id="@+id/navigation_dice_history"
         android:name="edu.shape.dicelegend.ui.diceHistory.DiceHistoryFragment"
         android:label="@string/title_dashboard"
         tools:layout="@layout/fragment_dice_history" />
 
-    <fragment
-        android:id="@+id/navigation_notifications"
-        android:name="edu.shape.dicelegend.ui.notifications.NotificationsFragment"
-        android:label="@string/title_notifications"
-        tools:layout="@layout/fragment_notifications" />
 </navigation>
