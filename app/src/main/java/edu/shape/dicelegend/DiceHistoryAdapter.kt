@@ -6,8 +6,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.TextView
-import edu.shape.dicelegend.ui.dashboard.DashboardFragment
-import java.time.LocalDateTime
 
 class DiceHistoryAdapter(context: Context, diceHistoryList: MutableList<DiceHistory>) :
     BaseAdapter() {

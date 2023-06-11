@@ -7,7 +7,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ListView
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
@@ -17,9 +16,8 @@ import edu.shape.dicelegend.DiceHistory
 import edu.shape.dicelegend.DiceHistoryAdapter
 import edu.shape.dicelegend.R
 import edu.shape.dicelegend.databinding.FragmentDiceHistoryBinding
-import java.time.LocalDateTime
 
-class DashboardFragment : Fragment() {
+class DiceHistoryFragment : Fragment() {
 
     private var _binding: FragmentDiceHistoryBinding? = null
 
