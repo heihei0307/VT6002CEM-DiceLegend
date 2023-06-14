@@ -28,6 +28,7 @@ import okhttp3.Callback
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import org.w3c.dom.Text
 import java.io.IOException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -61,7 +62,7 @@ class HomeFragment : Fragment() {
     private var acceleration = 0f
     private var currentAcceleration = 0f
     private var lastAcceleration = 0f
-    private var status: MainActivity.GameStatus = MainActivity.GameStatus.NewGame
+    private var status: MainActivity.GameStatus = MainActivity.GameStatus.PendingStart
     private var currentAiDice = 0
     private var currentPlayerDice = 0
     private var currentWinner = ""
@@ -77,10 +78,19 @@ class HomeFragment : Fragment() {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        context = getContext()
+        root.setOnClickListener{
+            Log.d("Click event", "screen is clicked")
+            if(status == MainActivity.GameStatus.PendingStart){
+                status = MainActivity.GameStatus.NewGame
+                val snakeText = binding.txtSnake
+                snakeText.visibility = TextView.INVISIBLE
+                val alertText: TextView = binding.alertMessage
+                alertText.text = "Shake to random dice"
+                alertText.visibility = TextView.VISIBLE
+            }
+        }
 
-        val alertText: TextView = binding.alertMessage
-        alertText.text = "Shake to random dice"
+        context = getContext()
 
         sensorManager = activity?.getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
@@ -146,9 +156,9 @@ class HomeFragment : Fragment() {
             acceleration = acceleration * 0.9f + delta
 
             if (acceleration > 10) {
-                var alert = binding.root.findViewById<TextView>(R.id.alert_message)
-                var playerView = binding.root.findViewById<TextView>(R.id.player_dice_number)
-                var aiView = binding.root.findViewById<TextView>(R.id.ai_dice_number)
+                var alert = binding.alertMessage
+                var playerView = binding.playerDiceNumber
+                var aiView = binding.aiDiceNumber
                 if (status == MainActivity.GameStatus.NewGame) {
                     alert.visibility = TextView.INVISIBLE
                     currentAiDice = getDice()
@@ -157,7 +167,6 @@ class HomeFragment : Fragment() {
                     playerView.visibility = TextView.VISIBLE
                     aiView.visibility = TextView.VISIBLE
                     status = MainActivity.GameStatus.ShakeDice
-                    Toast.makeText(context, "Shake Dice Result", Toast.LENGTH_SHORT).show()
                 } else if (status == MainActivity.GameStatus.OpenUp) {
                     currentAiDice = 0
                     currentPlayerDice = 0
@@ -167,10 +176,9 @@ class HomeFragment : Fragment() {
                     aiView.visibility = TextView.INVISIBLE
                     playerView.text = "Hidden"
                     aiView.text = "Hidden"
-                    alert.visibility = TextView.VISIBLE
-                    status = MainActivity.GameStatus.NewGame
-
-                    Toast.makeText(context, "Game Reset!", Toast.LENGTH_SHORT).show()
+                    alert.visibility = TextView.INVISIBLE
+                    binding.txtSnake.visibility = TextView.VISIBLE
+                    status = MainActivity.GameStatus.PendingStart
                 }
             }
         }
@@ -199,8 +207,8 @@ class HomeFragment : Fragment() {
             val distance = event?.values?.first()
             Log.d("Tag", "prox dis:${distance} cm")
             if(distance!! < 1){
-                var playerView = binding.root.findViewById<TextView>(R.id.player_dice_number)
-                var aiView = binding.root.findViewById<TextView>(R.id.ai_dice_number)
+                var playerView = binding.playerDiceNumber
+                var aiView = binding.aiDiceNumber
                 if (status == MainActivity.GameStatus.ShakeDice) {
                     playerView.text = "" + currentPlayerDice
                     aiView.text = "" + currentAiDice
@@ -217,6 +225,9 @@ class HomeFragment : Fragment() {
                     currentWinner = winner
                     addDiceHistory()
                     Toast.makeText(context, "This round is $winner", Toast.LENGTH_SHORT).show()
+                    val alertText: TextView = binding.alertMessage
+                    alertText.text = "Shake to end game!"
+                    alertText.visibility = TextView.VISIBLE
                 }
             }
         }

@@ -57,4 +57,16 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.745" />
+
+    <TextView
+        android:id="@+id/txtSnake"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:text="Click anywhere to start the game!"
+        android:textAlignment="center"
+        android:textColor="#CCFF9800"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:layout_editor_absoluteX="0dp" />
 </androidx.constraintlayout.widget.ConstraintLayout>

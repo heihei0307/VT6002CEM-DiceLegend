@@ -27,6 +27,7 @@ import java.util.concurrent.CountDownLatch
 
 class MainActivity : AppCompatActivity() {
     enum class GameStatus {
+        PendingStart,
         NewGame,
         ShakeDice,
         OpenUp,
