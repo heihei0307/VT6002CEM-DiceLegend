@@ -39,6 +39,17 @@ import kotlin.math.sqrt
 class HomeFragment : Fragment() {
 
     data class DiceResult(val dice: Int = 0)
+    class Extra() {
+        fun compareDiceSize(PlayerDice: Int, AiDice: Int): Int {
+            var result = 0
+            if(PlayerDice > AiDice)
+                result = 1
+            else if(PlayerDice < AiDice)
+                result = 2
+
+            return result
+        }
+    }
 
     private var _binding: FragmentHomeBinding? = null
     private var context: Context? = null
@@ -194,7 +205,7 @@ class HomeFragment : Fragment() {
                     playerView.text = "" + currentPlayerDice
                     aiView.text = "" + currentAiDice
                     var winner = ""
-                    val result = compareDiceSize(currentPlayerDice, currentAiDice)
+                    val result = Extra().compareDiceSize(currentPlayerDice, currentAiDice)
                     if(result == 0)
                         winner = "draw"
                     else if(result == 1)
@@ -210,16 +221,6 @@ class HomeFragment : Fragment() {
             }
         }
         override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
-    }
-
-    fun compareDiceSize(PlayerDice: Int, AiDice: Int): Int {
-        var result = 0
-        if(PlayerDice > AiDice)
-            result = 1
-        else if(PlayerDice < AiDice)
-            result = 2
-
-        return result
     }
 
     fun randomDice(): Int {
