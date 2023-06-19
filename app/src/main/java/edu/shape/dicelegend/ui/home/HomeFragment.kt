@@ -6,11 +6,13 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.hardware.camera2.CaptureResult.SENSOR_SENSITIVITY
+import android.media.Image
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -157,25 +159,23 @@ class HomeFragment : Fragment() {
 
             if (acceleration > 10) {
                 var alert = binding.alertMessage
-                var playerView = binding.playerDiceNumber
-                var aiView = binding.aiDiceNumber
+                var playerImage = binding.imgPlayerDice
+                var aiImage = binding.imgAiDice
                 if (status == MainActivity.GameStatus.NewGame) {
                     alert.visibility = TextView.INVISIBLE
                     currentAiDice = getDice()
                     currentPlayerDice = getDice()
-
-                    playerView.visibility = TextView.VISIBLE
-                    aiView.visibility = TextView.VISIBLE
+                    playerImage.visibility = ImageView.VISIBLE
+                    aiImage.visibility = ImageView.VISIBLE
                     status = MainActivity.GameStatus.ShakeDice
                 } else if (status == MainActivity.GameStatus.OpenUp) {
                     currentAiDice = 0
                     currentPlayerDice = 0
                     currentWinner = ""
-
-                    playerView.visibility = TextView.INVISIBLE
-                    aiView.visibility = TextView.INVISIBLE
-                    playerView.text = "Hidden"
-                    aiView.text = "Hidden"
+                    playerImage.setImageResource(R.drawable.dice_target)
+                    aiImage.setImageResource(R.drawable.dice_target)
+                    playerImage.visibility = ImageView.INVISIBLE
+                    aiImage.visibility = ImageView.INVISIBLE
                     alert.visibility = TextView.INVISIBLE
                     binding.txtSnake.visibility = TextView.VISIBLE
                     status = MainActivity.GameStatus.PendingStart
@@ -189,12 +189,19 @@ class HomeFragment : Fragment() {
     private val lightSensorListener: SensorEventListener = object : SensorEventListener {
         override fun onSensorChanged(event: SensorEvent) {
             val lightValue = event.values[0]
-            var playerView = binding.root.findViewById<TextView>(R.id.player_dice_number)
             if (status == MainActivity.GameStatus.ShakeDice) {
+                var playerImage = binding.imgPlayerDice
                 if (lightValue < 200) {
-                    playerView.text = "" + currentPlayerDice
+                    when(currentPlayerDice){
+                        1 -> playerImage.setImageResource(R.drawable.dice_six_faces_one)
+                        2 -> playerImage.setImageResource(R.drawable.dice_six_faces_two)
+                        3 -> playerImage.setImageResource(R.drawable.dice_six_faces_three)
+                        4 -> playerImage.setImageResource(R.drawable.dice_six_faces_four)
+                        5 -> playerImage.setImageResource(R.drawable.dice_six_faces_five)
+                        6 -> playerImage.setImageResource(R.drawable.dice_six_faces_six)
+                    }
                 } else {
-                    playerView.text = "Hidden"
+                    playerImage.setImageResource(R.drawable.dice_target)
                 }
             }
         }
@@ -207,11 +214,25 @@ class HomeFragment : Fragment() {
             val distance = event?.values?.first()
             Log.d("Tag", "prox dis:${distance} cm")
             if(distance!! < 1){
-                var playerView = binding.playerDiceNumber
-                var aiView = binding.aiDiceNumber
+                var playerImage = binding.imgPlayerDice
+                var aiImage = binding.imgAiDice
                 if (status == MainActivity.GameStatus.ShakeDice) {
-                    playerView.text = "" + currentPlayerDice
-                    aiView.text = "" + currentAiDice
+                    when(currentPlayerDice){
+                        1 -> playerImage.setImageResource(R.drawable.dice_six_faces_one)
+                        2 -> playerImage.setImageResource(R.drawable.dice_six_faces_two)
+                        3 -> playerImage.setImageResource(R.drawable.dice_six_faces_three)
+                        4 -> playerImage.setImageResource(R.drawable.dice_six_faces_four)
+                        5 -> playerImage.setImageResource(R.drawable.dice_six_faces_five)
+                        6 -> playerImage.setImageResource(R.drawable.dice_six_faces_six)
+                    }
+                    when(currentAiDice){
+                        1 -> aiImage.setImageResource(R.drawable.dice_six_faces_one)
+                        2 -> aiImage.setImageResource(R.drawable.dice_six_faces_two)
+                        3 -> aiImage.setImageResource(R.drawable.dice_six_faces_three)
+                        4 -> aiImage.setImageResource(R.drawable.dice_six_faces_four)
+                        5 -> aiImage.setImageResource(R.drawable.dice_six_faces_five)
+                        6 -> aiImage.setImageResource(R.drawable.dice_six_faces_six)
+                    }
                     var winner = ""
                     val result = Extra().compareDiceSize(currentPlayerDice, currentAiDice)
                     if(result == 0)
