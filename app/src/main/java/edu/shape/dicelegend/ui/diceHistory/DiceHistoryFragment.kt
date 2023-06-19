@@ -1,5 +1,6 @@
 package edu.shape.dicelegend.ui.diceHistory
 
+import android.icu.util.LocaleData
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -16,6 +17,7 @@ import edu.shape.dicelegend.DiceHistory
 import edu.shape.dicelegend.DiceHistoryAdapter
 import edu.shape.dicelegend.R
 import edu.shape.dicelegend.databinding.FragmentDiceHistoryBinding
+import java.time.LocalDateTime
 
 class DiceHistoryFragment : Fragment() {
 
@@ -54,7 +56,7 @@ class DiceHistoryFragment : Fragment() {
         val listviewDiceHistory = root.findViewById<ListView>(R.id.listviewDiceHistory)
         listviewDiceHistory!!.setAdapter(_adapter)
 
-        _db.orderByKey().addValueEventListener(_diceHistoryListener)
+        _db.orderByChild("diceDate").addValueEventListener(_diceHistoryListener)
 
         return root
     }
@@ -66,14 +68,13 @@ class DiceHistoryFragment : Fragment() {
 
     private fun loadDiceHistoryList(dataSnapshot: DataSnapshot){
         Log.d("MainActivity", "loadDiceHistoryList")
-
         val diceHistories = dataSnapshot.children.iterator()
 
         if(diceHistories.hasNext()){
             _diceHistoryList!!.clear()
 
             val listIndex = diceHistories.next()
-            val itemsIterator = listIndex.children.iterator()
+            val itemsIterator = listIndex.children.sortedByDescending { it.child("diceDate").value as String }.iterator()
 
             while(itemsIterator.hasNext()){
                 val currentItem = itemsIterator.next()
