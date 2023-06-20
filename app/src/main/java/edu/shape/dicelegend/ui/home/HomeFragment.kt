@@ -136,7 +136,7 @@ class HomeFragment : Fragment() {
                 var playerImage = binding.imgPlayerDice
                 var aiImage = binding.imgAiDice
                 if (status == MainActivity.GameStatus.NewGame) {
-                    alert.visibility = TextView.INVISIBLE
+                    alert.text = "Cover the phone to see the game's result. Or you can lower the light to see your own result!"
                     currentAiDice = getDice()
                     currentPlayerDice = getDice()
                     playerImage.visibility = ImageView.VISIBLE
