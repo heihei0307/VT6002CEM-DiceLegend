@@ -5,8 +5,6 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.hardware.camera2.CaptureResult.SENSOR_SENSITIVITY
-import android.media.Image
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -19,41 +17,19 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
-import com.google.gson.Gson
 import edu.shape.dicelegend.DiceHistory
 import edu.shape.dicelegend.MainActivity
 import edu.shape.dicelegend.R
 import edu.shape.dicelegend.Statics
 import edu.shape.dicelegend.databinding.FragmentHomeBinding
-import okhttp3.Call
-import okhttp3.Callback
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
-import org.w3c.dom.Text
-import java.io.IOException
+import edu.shape.dicelegend.services.Api.Companion.getDice
+import edu.shape.dicelegend.utils.DiceUtil.Companion.compareNumber
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Objects
-import java.util.Random
-import java.util.concurrent.CountDownLatch
 import kotlin.math.sqrt
 
 class HomeFragment : Fragment() {
-
-    data class DiceResult(val dice: Int = 0)
-    class Extra() {
-        fun compareDiceSize(PlayerDice: Int, AiDice: Int): Int {
-            var result = 0
-            if(PlayerDice > AiDice)
-                result = 1
-            else if(PlayerDice < AiDice)
-                result = 2
-
-            return result
-        }
-    }
-
     private var _binding: FragmentHomeBinding? = null
     private var context: Context? = null
 
@@ -70,7 +46,7 @@ class HomeFragment : Fragment() {
     private var currentWinner = ""
     lateinit var _db: DatabaseReference
     private var playerKey: String? = null
-    private var client: OkHttpClient? = null
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -122,8 +98,6 @@ class HomeFragment : Fragment() {
         playerKey = sharedPrefs?.getString("player_key", null)
 
         _db = FirebaseDatabase.getInstance().reference
-
-        client = OkHttpClient()
 
         return root
     }
@@ -234,7 +208,7 @@ class HomeFragment : Fragment() {
                         6 -> aiImage.setImageResource(R.drawable.dice_six_faces_six)
                     }
                     var winner = ""
-                    val result = Extra().compareDiceSize(currentPlayerDice, currentAiDice)
+                    val result = compareNumber(currentPlayerDice, currentAiDice)
                     if(result == 0)
                         winner = "draw"
                     else if(result == 1)
@@ -253,37 +227,6 @@ class HomeFragment : Fragment() {
             }
         }
         override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
-    }
-
-    fun randomDice(): Int {
-        val randomGenerator = Random()
-        return randomGenerator.nextInt(6) + 1
-    }
-
-    fun getDice(): Int {
-        val request = Request.Builder().url("https://dice-api.genzouw.com/v1/dice").build()
-        val latch = CountDownLatch(1)
-        var dice = 0
-
-        client?.newCall(request)?.enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                Log.d("HKT", e.toString())
-                latch.countDown()
-            }
-
-            override fun onResponse(call: Call, response: Response) {
-                var resStr = response.body?.string()
-                val result = Gson().fromJson(resStr, DiceResult::class.java)
-
-                dice = result.dice
-                Log.d("HKT", "response: $dice")
-                latch.countDown()
-            }
-        })
-
-        latch.await()
-
-        return dice
     }
 
     fun addDiceHistory() {
